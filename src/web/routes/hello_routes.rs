@@ -4,6 +4,7 @@ use axum::{
     response::IntoResponse,
 };
 use serde::Deserialize;
+use tracing::{debug, error};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::web::{response::HelloResponse, state, tags};
@@ -49,12 +50,18 @@ pub async fn hello(
     State(state): State<state::HelloState>,
     Query(query): Query<HelloQuery>,
 ) -> Result<impl IntoResponse, impl IntoResponse> {
-    let Ok(ip) = state.hello_service.get_ip().await else {
-        return Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Unable to get IP address",
-        ));
+    let ip = match state.hello_service.get_ip().await {
+        Ok(ip) => ip,
+        Err(err) => {
+            error!("Unable to get IP address: {}", err);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Unable to get IP address",
+            ));
+        }
     };
+
+    debug!(ip = &ip, format = ?query.format, "hello");
 
     let response = match query.format {
         Some(HelloFormat::Json) => HelloResponse::Json(serde_json::json!({ "ip": ip })),
