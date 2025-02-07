@@ -1,0 +1,10 @@
+[package]
+name = "dev-client"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+
+[dependencies]
+anyhow = { workspace = true }
+httpc-test = { version = "0.1", features = ["color-output"] }
+tokio = { workspace = true }

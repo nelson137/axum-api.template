@@ -1,0 +1,32 @@
+[workspace]
+members = ["crates/*"]
+
+[workspace.dependencies]
+anyhow = "1.0"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+[package]
+name = "mia-info-poc"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+resolver = "3"
+license = "MIT OR Apache-2.0"
+
+[features]
+listen_public = []
+
+[dependencies]
+anyhow = { workspace = true }
+async-trait = "0.1"
+axum = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { workspace = true }
+utoipa = { version = "5.3", features = ["axum_extras"] }
+utoipa-axum = "0.2"
+utoipa-swagger-ui = { version = "9.0", features = ["axum"] }
+
+[dev-dependencies]
+mockall = "0.13"
+rand = "0.9"
