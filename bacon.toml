@@ -64,7 +64,7 @@ on_success = "back" # so that we don't open the browser at each change
 # a binding `r = job:run-long` at the end of this file .
 [jobs.server]
 command = [
-    "cargo", "run", "--quiet", "--package=mia-info-poc"
+    "cargo", "run", "--quiet", "--package=my-api"
 ]
 need_stdout = true
 allow_warnings = true
