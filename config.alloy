@@ -19,3 +19,25 @@ loki.write "grafana_loki" {
     url = "http://loki:3100/loki/api/v1/push"
   }
 }
+
+prometheus.exporter.unix "local_system" { }
+
+prometheus.scrape "scrape_unix" {
+  targets         = prometheus.exporter.unix.local_system.targets
+  forward_to      = [prometheus.remote_write.metrics_service.receiver]
+  scrape_interval = "10s"
+}
+
+prometheus.scrape "scrape_app" {
+  targets = [{
+    __address__ = "app:8080",
+  }]
+  forward_to = [prometheus.remote_write.metrics_service.receiver]
+  scrape_interval = "10s"
+}
+
+prometheus.remote_write "metrics_service" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+}

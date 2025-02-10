@@ -3,6 +3,7 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
+use axum_prometheus::metrics;
 use serde::Deserialize;
 use tracing::{debug, error};
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -62,6 +63,7 @@ pub async fn hello(
     };
 
     debug!(ip = &ip, format = ?query.format, "hello");
+    metrics::gauge!("said_hello", &[("format", format!("{:?}", query.format))]).increment(1);
 
     let response = match query.format {
         Some(HelloFormat::Json) => HelloResponse::Json(serde_json::json!({ "ip": ip })),
