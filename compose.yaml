@@ -1,0 +1,51 @@
+name: my-api
+services:
+  grafana:
+    image: grafana/grafana:11.5.0
+    networks: ['net']
+    ports: ['3000:3000']
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 1
+        datasources:
+          - name: Loki
+            type: loki
+            access: proxy
+            orgId: 1
+            url: http://loki:3100
+            basicAuth: false
+            isDefault: false
+            version: 1
+            editable: false
+        EOF
+        /run.sh
+  loki:
+    image: grafana/loki:3.3.2
+    networks: ['net']
+    ports: ['3100:3100']
+    command: ['-config.file=/etc/loki/local-config.yaml']
+  alloy:
+    image: grafana/alloy:v1.6.1
+    networks: ['net']
+    ports: ['12345:12345']
+    volumes:
+      - type: bind
+        source: ./config.alloy
+        target: /etc/alloy/config.alloy
+    entrypoint: ['/bin/alloy', 'run', '--storage.path=/var/lib/alloy/data', '--server.http.listen-addr=0.0.0.0:12345', '/etc/alloy/config.alloy']
+  # TODO: add `develop` section
+  # https://docs.docker.com/compose/gettingstarted/#step-4-edit-the-compose-file-to-use-compose-watch
+  app:
+    build: .
+    networks: ['net']
+    ports: ['8080:8080']
+networks:
+  net:
