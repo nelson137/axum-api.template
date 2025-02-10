@@ -3,7 +3,7 @@ members = ["crates/*"]
 
 [workspace.dependencies]
 anyhow = "1.0"
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal"] }
 
 [package]
 name = "my-api"
