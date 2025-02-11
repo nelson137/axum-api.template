@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Settings {
@@ -19,8 +19,10 @@ impl Settings {
                     .required(false),
             )
             .add_source(config::Environment::with_prefix("APP"))
-            .build()?
-            .try_deserialize()?;
+            .build()
+            .context("failed to collect config sources")?
+            .try_deserialize()
+            .context("failed to deserialize settings")?;
         Ok(settings)
     }
 }

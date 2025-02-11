@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod settings;
@@ -9,8 +10,8 @@ static APP_NAME: &str = env!("CARGO_PKG_NAME");
 static APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[tokio::main]
-async fn main() {
-    let settings = settings::Settings::new().expect("parse config");
+async fn main() -> Result<()> {
+    let settings = settings::Settings::new().context("failed to build app settings")?;
 
     let filter_layer = tracing_subscriber::EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| settings.log_filter.parse().unwrap());
@@ -27,8 +28,10 @@ async fn main() {
 
     #[cfg(feature = "loki")]
     let subscriber = subscriber.with({
-        let url = url::Url::parse(&settings.loki_url).unwrap();
-        let (layer, task) = tracing_loki::builder().build_url(url).unwrap();
+        let url = url::Url::parse(&settings.loki_url).context("failed to parse loki url")?;
+        let (layer, task) = tracing_loki::builder()
+            .build_url(url)
+            .context("failed to build loki layer")?;
         tokio::spawn(task);
         layer
     });
@@ -44,7 +47,7 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind(&settings.bind_addr)
         .await
-        .expect("bind to listen address");
+        .with_context(|| format!("failed to bind to address: {}", settings.bind_addr))?;
     tracing::info!("Listening on {:?}", listener.local_addr().unwrap());
 
     axum::serve(listener, routes.into_make_service())
@@ -52,5 +55,5 @@ async fn main() {
             tokio::signal::ctrl_c().await.expect("cancellation signal")
         })
         .await
-        .expect("run server");
+        .context("failed to run server")
 }
