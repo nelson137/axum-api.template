@@ -35,12 +35,12 @@ COPY --from=planner /app/recipe.json recipe.json
 
 # Build dependencies - this layer is cached as long as `recipe.json`
 # doesn't change.
-RUN cargo chef cook --bin=$APP_NAME --features=listen_public,loki --recipe-path=recipe.json
+RUN cargo chef cook --bin=$APP_NAME --features=loki --recipe-path=recipe.json
 
 # Build the whole project
 COPY . .
 
-RUN cargo build --bin=$APP_NAME --features=listen_public,loki
+RUN cargo build --bin=$APP_NAME --features=loki
 
 ######################################################################
 # Runtime
@@ -57,6 +57,7 @@ RUN apt-get update && \
 WORKDIR /app
 
 COPY --from=builder /app/target/debug/$APP_NAME .
+COPY --from=builder /app/config/ ./config/
 
 EXPOSE 8080
 

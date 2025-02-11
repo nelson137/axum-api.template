@@ -1,0 +1,1 @@
+log_filter = "info,axum=trace,my_api=trace"
