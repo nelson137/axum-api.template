@@ -1,2 +1,3 @@
+environment = "local"
 log_filter = "info,axum=trace,my_api=trace"
 bind_addr = "127.0.0.1:8080"

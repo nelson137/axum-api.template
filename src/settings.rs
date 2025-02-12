@@ -2,6 +2,8 @@ use anyhow::{Context, Result};
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Settings {
+    #[allow(dead_code)]
+    pub environment: String,
     pub log_filter: String,
     pub bind_addr: String,
     #[cfg(feature = "loki")]
