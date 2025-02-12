@@ -6,9 +6,6 @@ mod settings;
 mod test_utils;
 mod web;
 
-static APP_NAME: &str = env!("CARGO_PKG_NAME");
-static APP_VERSION: &str = env!("CARGO_PKG_VERSION");
-
 #[tokio::main]
 async fn main() -> Result<()> {
     let settings = settings::Settings::new().context("failed to build app settings")?;
@@ -30,6 +27,8 @@ async fn main() -> Result<()> {
     let subscriber = subscriber.with({
         let url = url::Url::parse(&settings.loki_url).context("failed to parse loki url")?;
         let (layer, task) = tracing_loki::builder()
+            .extra_field("service_name", env!("CARGO_PKG_NAME"))?
+            .extra_field("environment", &settings.environment)?
             .build_url(url)
             .context("failed to build loki layer")?;
         tokio::spawn(task);
@@ -37,8 +36,6 @@ async fn main() -> Result<()> {
     });
 
     subscriber.init();
-
-    tracing::info!(version = APP_VERSION, "{APP_NAME}");
 
     let routes = match web::router() {
         Ok(r) => r,
@@ -48,7 +45,12 @@ async fn main() -> Result<()> {
     let listener = tokio::net::TcpListener::bind(&settings.bind_addr)
         .await
         .with_context(|| format!("failed to bind to address: {}", settings.bind_addr))?;
-    tracing::info!("Listening on {:?}", listener.local_addr().unwrap());
+
+    tracing::info!(
+        addr = listener.local_addr().unwrap().to_string(),
+        version = env!("CARGO_PKG_VERSION"),
+        "Starting server",
+    );
 
     axum::serve(listener, routes.into_make_service())
         .with_graceful_shutdown(async {
